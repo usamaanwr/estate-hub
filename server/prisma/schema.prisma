@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String    @id @default(uuid())
+  fullName        String
+  username        String    @unique
+  email           String    @unique
+  password        String
+  role            Role      @default(buyer)
+  isApproved      Boolean   @default(false)
+  resetOTP        String?
+  resetOTPExpiry  DateTime?
+  refreshToken    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  propertiesAsSeller Property[] @relation("SellerProperties")
+  propertiesAsAgent  Property[] @relation("AgentProperties")
+  bookingsAsBuyer    Booking[]  @relation("BuyerBookings")
+  bookingsAsAgent    Booking[]  @relation("AgentBookings")
+}
+
+enum Role {
+  admin
+  agent
+  seller
+  buyer
+}
+
+model Property {
+  id          String         @id @default(uuid())
+  title       String
+  description String
+  price       Float
+  city        String
+  location    String
+  type        PropertyType
+  bedroom     Int            @default(0)
+  bathroom    Int            @default(0)
+  area        Float
+  areaUnit    AreaUnit       @default(sqft)
+  status      PropertyStatus @default(available)
+  images      String[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  seller      User    @relation("SellerProperties", fields: [sellerId], references: [id])
+  sellerId    String
+
+  agent       User?   @relation("AgentProperties", fields: [agentId], references: [id])
+  agentId     String?
+
+  bookings    Booking[]
+}
+
+enum PropertyType {
+  house
+  apartment
+  plot
+  villa
+  commercial
+}
+
+enum AreaUnit {
+  sqft
+  sqyd
+  marla
+  kanal
+}
+
+enum PropertyStatus {
+  available
+  sold
+  rented
+}
+
+model Booking {
+  id         String        @id @default(uuid())
+  status     BookingStatus @default(pending)
+  visitDate  DateTime
+  city       String
+  message    String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  property   Property @relation(fields: [propertyId], references: [id])
+  propertyId String
+
+  buyer      User     @relation("BuyerBookings", fields: [buyerId], references: [id])
+  buyerId    String
+
+  agent      User?    @relation("AgentBookings", fields: [agentId], references: [id])
+  agentId    String?
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
