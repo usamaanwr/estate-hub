@@ -3,6 +3,7 @@ import cors from "cors"
 import dotenv from "dotenv"
 dotenv.config()
 import userRouter from "./src/routes/user.routes.js"
+import propertyRouter from "./src/routes/property.routes.js"
 import cookieParser from "cookie-parser"
 
 const app = express()
@@ -17,4 +18,5 @@ app.use(express.static("public"))
 
 
 app.use('/api/v1/users', userRouter)
+app.use('/api/v1/property', propertyRouter)
 export default app
