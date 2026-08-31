@@ -41,10 +41,10 @@ const registerUser = asyncHandler(async (req , res)=>{
   if (error) {
     throw new ApiError(400, error.details[0].message);
   }
-  const {fullName , username , email , password} = req.body;
+  const {fullName , username , email , password , role} = req.body;
   console.log(req.body);
   
-  if ([fullName , username , email , password].some((field)=> field?.trim()==="")) {
+  if ([fullName , username , email , password, role].some((field)=> field?.trim()==="")) {
     throw new ApiError(400 , "All fields are required");
   }
   const existUser = await prisma.user.findFirst({
@@ -61,6 +61,7 @@ const registerUser = asyncHandler(async (req , res)=>{
     username: username.toLowerCase(),
     email,
     password: hashedPassword,
+    role,
   },
   })
 
