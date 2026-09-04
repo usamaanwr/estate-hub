@@ -6,9 +6,9 @@ import { hashPassword , isPasswordCorrect , generateAccessToken , generateRefres
 import jwt from "jsonwebtoken"
 import { prisma } from "../dp/index.js";
 import { sendOTPEmail } from "../services/email.services.js";
-const genrateAccessAndRefreshToken = async (userId)=>{
+const genrateAccessAndRefreshToken = async (user)=>{
     try {
-        const user = await prisma.user.findUnique({where: {id: userId} });
+        // const user = await prisma.user.findUnique({where: {id: userId} });
 
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
@@ -62,6 +62,7 @@ const registerUser = asyncHandler(async (req , res)=>{
     email,
     password: hashedPassword,
     role,
+    isApproved: (role === "buyer" || role === "admin")? true: false
   },
   })
 
@@ -104,7 +105,10 @@ if (!isPasswordValid) {
     throw new ApiError(401, "Inavlid User credentials");
 }
 
-const { accessToken , refreshToken} = await genrateAccessAndRefreshToken(user.id)
+if (user.isApproved === false) {
+  throw new ApiError(403, "Your account is pending admin approval. Please wait.");
+}
+const { accessToken , refreshToken} = await genrateAccessAndRefreshToken(user)
 const loggedInUser = await prisma.user.findUnique({
   where:{ id: user.id}
 })
@@ -158,7 +162,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   try {
     const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-    const user = await prisma.user.findUnique({ where: { id: decodedToken?._id } });
+    const user = await prisma.user.findUnique({ where: { id: decodedToken?.id } });
 
     if (!user) {
       throw new ApiError(401, "Inavlid refresh token");

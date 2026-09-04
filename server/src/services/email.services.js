@@ -1,28 +1,33 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 export const sendOTPEmail = async (email, otp) => {
-  const { data, error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM,
-    to: email,
-    subject: "Password Reset OTP",
-    html: `
-      <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2>Password Reset Request</h2>
-        <p>Your OTP code is:</p>
-        <h1 style="color: #e74c3c; letter-spacing: 8px;">${otp}</h1>
-        <p>This OTP will expire in <b>10 minutes</b>.</p>
-        <p>If you did not request this, please ignore this email.</p>
-      </div>
-    `,
-  });
+  try {
+    const mailOptions = {
+      from: `"Real Estate Admin" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your Password Reset OTP",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto;">
+          <h2>Password Reset Request</h2>
+          <p>We received a request to reset your password. Use the OTP below to proceed:</p>
+          <h1 style="background: #f4f4f4; padding: 10px; text-align: center; letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP is valid for 60 seconds.</p>
+        </div>
+      `,
+    };
 
-  if (error) {
-    console.log("RESEND ERROR:", error);   // 👈 real wajah yahan print hogi
-    throw new Error(error.message || "Failed to send email");
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent: " + info.response);
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new Error("Could not send OTP email");
   }
-
-  console.log("EMAIL SENT SUCCESSFULLY:", data);
-  return data;
 };
