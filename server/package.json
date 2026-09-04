@@ -21,6 +21,7 @@
     "joi": "^18.2.3",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
+    "nodemailer": "^10.0.0",
     "nodemon": "^3.1.14",
     "pg": "^8.22.0",
     "prettier": "^3.8.4",
