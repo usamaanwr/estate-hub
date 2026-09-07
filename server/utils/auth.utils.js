@@ -12,7 +12,7 @@ export const isPasswordCorrect = async(inputPassword , hashPassword)=>{
 export const generateAccessToken = (user)=>{
     return jwt.sign(
         {
-            _id :user.id,
+            id :user.id,
             fullName: user.fullName,
             email: user.email,
             role:user.role,
@@ -24,7 +24,7 @@ export const generateAccessToken = (user)=>{
 
 export const generateRefreshToken = (user) => {
   return jwt.sign(
-    { _id: user.id },
+    { id: user.id },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
   );
