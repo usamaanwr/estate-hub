@@ -14,7 +14,7 @@ const genrateAccessAndRefreshToken = async (user)=>{
         const refreshToken = generateRefreshToken(user);
 
         await prisma.user.update({
-        where: {id : userId}, 
+        where: {id : user.id}, 
         data: {refreshToken}});
         return {accessToken , refreshToken};
     } catch (error)
@@ -44,7 +44,7 @@ const registerUser = asyncHandler(async (req , res)=>{
   const {fullName , username , email , password , role} = req.body;
   console.log(req.body);
   
-  if ([fullName , username , email , password, role].some((field)=> field?.trim()==="")) {
+  if ([fullName , username , email , password,].some((field)=> field?.trim()==="")) {
     throw new ApiError(400 , "All fields are required");
   }
   const existUser = await prisma.user.findFirst({
@@ -55,16 +55,21 @@ const registerUser = asyncHandler(async (req , res)=>{
   }
 
   const hashedPassword = await hashPassword(password)
+  const assignedRole = role || "buyer"
   const user = await prisma.user.create({
       data: {
     fullName,
     username: username.toLowerCase(),
     email,
     password: hashedPassword,
-    role,
-    isApproved: (role === "buyer" || role === "admin")? true: false
+    role:assignedRole,
+    isApproved: (assignedRole === "buyer" || assignedRole === "admin")? true: false
   },
   })
+
+  if (!user) {
+    throw new ApiError(500, "User registration failed");
+  }
 
   const { password: _, refreshToken , ...createdUser } = user
  if (!createdUser) {
@@ -104,16 +109,13 @@ const isPasswordValid = await isPasswordCorrect(password , user.password)
 if (!isPasswordValid) {
     throw new ApiError(401, "Inavlid User credentials");
 }
-
-if (user.isApproved === false) {
-  throw new ApiError(403, "Your account is pending admin approval. Please wait.");
-}
 const { accessToken , refreshToken} = await genrateAccessAndRefreshToken(user)
-const loggedInUser = await prisma.user.findUnique({
-  where:{ id: user.id}
-})
 
-const {password:_,  refreshToken: __, ...safeUser}= loggedInUser
+// const loggedInUser = await prisma.user.findUnique({
+//   where:{ id: user.id}
+// })
+
+const {password:_,  refreshToken: __, ...safeUser}= user
 const options = {
     httpOnly:true,
     secure:true
@@ -123,7 +125,7 @@ return res.status(200)
 .cookie("refreshToken" , refreshToken , options)
 .json(
   new ApiResponse(
-    200, {user: loggedInUser , accessToken , refreshToken},"user logged in sucessFully"
+    200, {user: safeUser , accessToken , refreshToken},"user logged in sucessFully"
   )
 )
 });
@@ -177,7 +179,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       secure: true,
     };
 
-    const { accessToken, refreshToken: newRefreshToken } = await genrateAccessAndRefreshToken(user.id);
+    const { accessToken, refreshToken: newRefreshToken } = await genrateAccessAndRefreshToken(user);
 
     return res
       .status(200)
@@ -213,7 +215,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const otpExpiry = new Date(Date.now() + 60 * 1000); // 60 seconds
 
   await prisma.user.update({
-    where: { id: user.id },
+    where: { id: user.id }, 
     data: {
       resetOTP: otp,
       resetOTPExpiry: otpExpiry,
