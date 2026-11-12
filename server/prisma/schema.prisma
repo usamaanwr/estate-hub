@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -8,18 +9,18 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(uuid())
-  fullName        String
-  username        String    @unique
-  email           String    @unique
-  password        String
-  role            Role      @default(buyer)
-  isApproved      Boolean   @default(false)
-  resetOTP        String?
-  resetOTPExpiry  DateTime?
-  refreshToken    String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String   @id @default(uuid())
+  fullName       String
+  username       String   @unique
+  email          String   @unique
+  password       String
+  role           Role     @default(buyer)
+  isApproved     Boolean  @default(false)
+  resetOTP       String?
+  resetOTPExpiry DateTime?
+  refreshToken   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   propertiesAsSeller Property[] @relation("SellerProperties")
@@ -36,29 +37,30 @@ enum Role {
 }
 
 model Property {
-  id          String         @id @default(uuid())
-  title       String
-  description String
-  price       Float
-  city        String
-  location    String
-  type        PropertyType
-  bedroom     Int            @default(0)
-  bathroom    Int            @default(0)
-  area        Float
-  areaUnit    AreaUnit       @default(sqft)
-  status      PropertyStatus @default(available)
-  images      String[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id             String                @id @default(uuid())
+  title          String
+  description    String
+  price          Float
+  city           String
+  location       String
+  type           PropertyType
+  bedroom        Int                   @default(0)
+  bathroom       Int                   @default(0)
+  area           Float
+  areaUnit       AreaUnit              @default(sqft)
+  status         PropertyStatus        @default(available)
+  approvalStatus PropertyApprovalStatus @default(pending)
+  images         String[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
-  seller      User    @relation("SellerProperties", fields: [sellerId], references: [id])
-  sellerId    String
+  seller   User  @relation("SellerProperties", fields: [sellerId], references: [id])
+  sellerId String
 
-  agent       User?   @relation("AgentProperties", fields: [agentId], references: [id])
-  agentId     String?
+  agent   User?   @relation("AgentProperties", fields: [agentId], references: [id])
+  agentId String?
 
-  bookings    Booking[]
+  bookings Booking[]
 }
 
 enum PropertyType {
@@ -80,6 +82,12 @@ enum PropertyStatus {
   available
   sold
   rented
+}
+
+enum PropertyApprovalStatus {
+  pending
+  approved
+  rejected
 }
 
 model Booking {
