@@ -1,9 +1,7 @@
 import { Router } from "express";
 
-import jwt from "jsonwebtoken"
 import { forgotPassword, loginUser, logoutUser, refreshAccessToken, registerUser, resendOtp, resetPassword } from "../controller/user.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
-import { asyncHandler } from "../../utils/asynHandler.js";
 
 const router = Router();
 
