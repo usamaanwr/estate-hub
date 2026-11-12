@@ -1,9 +1,21 @@
+import { check } from "prettier";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asynHandler.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import { prisma } from "../dp/index.js";
 const addProperty = asyncHandler(async (req, res) => {
+  // check seller role
+
+  if (req.user.role !== "seller") {
+    throw new ApiError(403, "Only sellers can add properties");
+  }
+
+  //check seller approval
+
+  if (!req.user.isApproved) {
+    throw new ApiError(403, "Your seller account is not approved yet");
+  }
   const {
     title,
     description,
@@ -16,12 +28,46 @@ const addProperty = asyncHandler(async (req, res) => {
     area,
     areaUnit,
   } = req.body;
-  console.log(propertyfields);
-  
+  // console.log(propertyfields);
+
   // feild vaidation
- if (!title || !description || !price || !city || !location || !type || !area) {
-  throw new ApiError(400, "All required fields must be filled");
-}
+  if (
+    !title?.trim() ||
+    !description?.trim() ||
+    !price ||
+    !city?.trim() ||
+    !location?.trim() ||
+    !type ||
+    !area
+  ) {
+    throw new ApiError(400, "All required fields must be filled");
+  }
+
+  // Number validation
+  const propertyPrice = Number(price);
+  const propertyArea = Number(area);
+
+  if (
+    !Number.isFinite(propertyPrice) ||
+    propertyPrice <= 0 ||
+    !Number.isFinite(propertyArea) ||
+    propertyArea <= 0
+  ) {
+    throw new ApiError(400, "Price and area must be valid positive numbers");
+  }
+
+  const bedroomCount = bedroom ? Number(bedroom) : 0;
+  const bathroomCount = bathroom ? Number(bathroom) : 0;
+
+  if (
+    !Number.isInteger(bedroomCount) ||
+    bedroomCount < 0 ||
+    !Number.isInteger(bathroomCount) ||
+    bathroomCount < 0
+  ) {
+    throw new ApiError(400, "Bedroom and bathroom must be valid numbers");
+  }
+
   //imaege check
   if (!req.files || req.files.length === 0) {
     throw new ApiError(400, "At least one property image is required");
@@ -29,7 +75,7 @@ const addProperty = asyncHandler(async (req, res) => {
   // upload images for cloudinary
 
   const uploadPromise = req.files.map((file) => {
-   return uploadOnCloudinary(file.buffer, "estatehub-properties");
+    return uploadOnCloudinary(file.buffer, "estatehub-properties");
   });
   const uploadResults = await Promise.all(uploadPromise);
 
@@ -37,18 +83,20 @@ const addProperty = asyncHandler(async (req, res) => {
 
   const property = await prisma.property.create({
     data: {
-      title,
-      description,
-      price: parseFloat(price),
-      city,
-      location,
+      title: title.trim(),
+      description: description.trim(),
+      price: propertyPrice,
+      city: city.trim(),
+      location: city.trim(),
       type,
-      bedroom: bedroom ? parseInt(bedroom) : 0,
-      bathroom: bathroom ? parseInt(bathroom) : 0,
-      area: parseFloat(area),
+      bedroom: bedroomCount,
+      bathroom: bathroomCount,
+      area: propertyPrice,
       areaUnit: areaUnit || "sqft",
       images: imagesUrls,
-      sellerId: req.user.id, 
+      //Authenticated seller
+
+      sellerId: req.user.id,
     },
   });
 
@@ -57,4 +105,31 @@ const addProperty = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, property, "Property added successfully"));
 });
 
-export { addProperty}
+
+
+// get my porperty 
+const getMyProperties = asyncHandler(async(req , res)=>{
+ if(req.user.role !== "seller"){
+  throw new ApiError(403 ,"Only sellers can view their properties");
+  
+ }
+
+ const properties = await prisma.property.findMany({
+  where:{
+    seller : req.user.id
+  },
+  orderBy:{
+    createdAt: "desc"
+  },
+ })
+
+ return res.status(200).json(
+  new ApiResponse(
+    200,
+    properties,
+    "Your properties fetched successfully"
+  )
+ );
+});
+
+export { addProperty, getMyProperties };
