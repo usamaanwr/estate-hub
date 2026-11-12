@@ -10,7 +10,7 @@ export const userRegisterValidation = (data) => {
         tlds: { allow: ["com", "net"] },
       })
       .required(),
-    role: Joi.string().valid("admin", "agent", "seller", "buyer").optional(),
+    role: Joi.string().valid("seller", "buyer").optional(),
   });
   return schema.validate(data);
 };
