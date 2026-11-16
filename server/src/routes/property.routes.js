@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { addProperty , getMyProperties } from "../controller/property.controller.js"
+import { addProperty , getAllProperty, getMyProperties, getPropertiesById } from "../controller/property.controller.js"
 import { verifyJWT } from "../middleware/auth.middleware.js"
 import { authorizeRole } from "../middleware/authorizeRoles.middleware.js"
 import { upload } from "../middleware/multer.middleware.js"
@@ -18,5 +18,14 @@ PropertyRouter.route("/my-properties").get(
     authorizeRole("seller"),
     getMyProperties
 )
+
+PropertyRouter.route("/").get(
+getAllProperty
+);
+
+PropertyRouter.route("/:id").get(
+getPropertiesById
+);
+
 
 export default PropertyRouter
