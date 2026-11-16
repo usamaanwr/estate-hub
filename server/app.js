@@ -5,7 +5,7 @@ dotenv.config()
 import userRouter from "./src/routes/user.routes.js"
 import propertyRouter from "./src/routes/property.routes.js"
 import cookieParser from "cookie-parser"
-import { getMyProperties } from "./src/controller/property.controller.js"
+import AdminRouter from "./src/routes/admin.routes.js"
 
 const app = express()
 app.use(cors({
@@ -20,5 +20,5 @@ app.use(express.static("public"))
 
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/property', propertyRouter)
-app.use("/api/v1/getMyproperties" , getMyProperties)
+app.use("/api/v1/admin" , AdminRouter)
 export default app
