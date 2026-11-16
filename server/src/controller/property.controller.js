@@ -1,4 +1,3 @@
-import { check } from "prettier";
 import { ApiError } from "../../utils/ApiError.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asynHandler.js";
@@ -87,7 +86,7 @@ const addProperty = asyncHandler(async (req, res) => {
       description: description.trim(),
       price: propertyPrice,
       city: city.trim(),
-      location: city.trim(),
+      location: location.trim(),
       type,
       bedroom: bedroomCount,
       bathroom: bathroomCount,
@@ -105,31 +104,62 @@ const addProperty = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, property, "Property added successfully"));
 });
 
+// get my porperty
+const getMyProperties = asyncHandler(async (req, res) => {
+  if (req.user.role !== "seller") {
+    throw new ApiError(403, "Only sellers can view their properties");
+  }
 
+  const properties = await prisma.property.findMany({
+    where: {
+      sellerId: req.user.id,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-// get my porperty 
-const getMyProperties = asyncHandler(async(req , res)=>{
- if(req.user.role !== "seller"){
-  throw new ApiError(403 ,"Only sellers can view their properties");
-  
- }
-
- const properties = await prisma.property.findMany({
-  where:{
-    seller : req.user.id
-  },
-  orderBy:{
-    createdAt: "desc"
-  },
- })
-
- return res.status(200).json(
-  new ApiResponse(
-    200,
-    properties,
-    "Your properties fetched successfully"
-  )
- );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, properties, "Your properties fetched successfully")
+    );
 });
 
-export { addProperty, getMyProperties };
+// get all property
+
+const getAllProperty = asyncHandler(async (req, res) => {
+  const properties = await prisma.property.findMany({
+    where: {
+      approvalStatus: "approved",
+      status: "available",
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, properties, "All properties fetched successfully")
+    );
+});
+
+const getPropertiesById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const property = await prisma.property.findFirst({
+    where: {
+      id,
+      approvalStatus: "approved",
+    },
+  });
+
+  if (!property) {
+    throw new ApiError(404, "Property not found");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, property, "Property fetched successfully"));
+});
+export { addProperty, getMyProperties, getAllProperty , getPropertiesById };
