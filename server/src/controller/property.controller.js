@@ -90,7 +90,7 @@ const addProperty = asyncHandler(async (req, res) => {
       type,
       bedroom: bedroomCount,
       bathroom: bathroomCount,
-      area: propertyPrice,
+      area: propertyArea,
       areaUnit: areaUnit || "sqft",
       images: imagesUrls,
       //Authenticated seller
