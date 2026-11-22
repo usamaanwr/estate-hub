@@ -8,35 +8,34 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (fileBuffer, foldername) => {
-  return new Promise((resolve , reject)=>{
-    let uploadStream = cloudinary.uploader.upload_stream(
-      {resource_type: "auto" , folder: foldername},
-      (error , result)=> {
-        if(error) reject(error);
-        else resolve(result);
+export const uploadOnCloudinary = (fileBuffer, foldername) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "image",
+        folder: foldername,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+
+        if (!result?.secure_url || !result?.public_id) {
+          return reject(new Error("Cloudinary upload failed"));
+        }
+
+        resolve(result);
       }
     );
-    streamifier.createReadStream(fileBuffer).pipe(uploadStream);
-  })
-  // try {
-  //   if (!localFilePath) return null;
-  //   const response = await cloudinary.uploader.upload(localFilePath, {
-  //     resource_type: "auto",
-  //     folder: foldername,
-  //   });
 
-  //   if (fs.existsSync(localFilePath)) {
-  //     await fs.promises.unlink(localFilePath);
-  //   }
-  //   return response;
-  // } catch (error) {
-  //   console.error("cloudnary Error:", error.message);
-  //   if (fs.existsSync(localFilePath)) {
-  //     await fs.promises.unlink(localFilePath)
-  //   }
-  //   return null;
-  // }
+    streamifier
+      .createReadStream(fileBuffer)
+      .on("error", reject)
+      .pipe(uploadStream);
+  });
 };
 
-export { uploadOnCloudinary };
+export const deleteFromCloudinary = async (publicId) => {
+  return cloudinary.uploader.destroy(publicId, {
+    resource_type: "image",
+  });
+
+}
