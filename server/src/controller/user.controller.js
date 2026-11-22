@@ -12,6 +12,7 @@ import {
 import jwt from "jsonwebtoken";
 import { prisma } from "../dp/index.js";
 import { sendOTPEmail } from "../services/email.services.js";
+import { accessCookieOptions, refreshCookieOptions } from "../config/cookie.config.js";
 const genrateAccessAndRefreshToken = async (user) => {
   try {
     // const user = await prisma.user.findUnique({where: {id: userId} });
@@ -80,7 +81,7 @@ const registerUser = asyncHandler(async (req, res) => {
       email,
       password: hashedPassword,
       role: assignedRole,
-      isApproved: assignedRole === "buyer",
+      isApproved: true,
     },
   });
 
@@ -133,18 +134,18 @@ const loginUser = asyncHandler(async (req, res) => {
   // })
 
   const { password: _, refreshToken: __, ...safeUser } = user;
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+  // const options = {
+  //   httpOnly: true,
+  //   secure: true,
+  // };
   return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, accessCookieOptions)
+    .cookie("refreshToken", refreshToken, refreshCookieOptions)
     .json(
       new ApiResponse(
         200,
-        { user: safeUser, accessToken, refreshToken },
+        { user: safeUser },
         "user logged in sucessFully"
       )
     );
@@ -158,14 +159,12 @@ const logoutUser = asyncHandler(async (req, res) => {
     data: { refreshToken: null },
   });
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", {...accessCookieOptions,
+      maxAge: undefined,
+    })
+    .clearCookie("refreshToken", {...refreshCookieOptions , maxAge: undefined})
     .json(new ApiResponse(200, {}, "User logged out succesFully"));
 });
 
@@ -175,7 +174,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!incomingRefreshToken) {
-    throw new ApiError(402, "Unauthoried request");
+    throw new ApiError(401, "Unauthoried request");
   }
 
   try {
@@ -196,23 +195,23 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       throw new ApiError(402, "Refresh token is expired or used");
     }
 
-    const options = {
-      httpOnly: true,
-      secure: true,
-    };
+    // const options = {
+    //   httpOnly: true,
+    //   secure: true,
+    // };
 
     const { accessToken, refreshToken: newRefreshToken } =
       await genrateAccessAndRefreshToken(user);
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
+      .cookie("accessToken", accessToken, accessCookieOptions)
+      .cookie("refreshToken", newRefreshToken, refreshCookieOptions)
       .json(
         new ApiResponse(
           200,
           { accessToken, refreshToken: newRefreshToken },
-          "Access token refreshed"
+          "Access token refreshed succesFully"
         )
       );
   } catch (error) {
