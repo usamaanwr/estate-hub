@@ -7,6 +7,7 @@ import propertyRouter from "./src/routes/property.routes.js"
 import cookieParser from "cookie-parser"
 import AdminRouter from "./src/routes/admin.routes.js"
 import { errorHandler } from "./src/middleware/error.middleware.js"
+import BookingRouter from "./src/routes/booking.routes.js"
 
 const app = express()
 app.use(cors({
@@ -22,5 +23,6 @@ app.use(express.static("public"))
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/property', propertyRouter)
 app.use("/api/v1/admin" , AdminRouter)
+app.use("/api/v1/bookings" , BookingRouter)
 app.use(errorHandler);
 export default app

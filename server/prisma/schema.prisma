@@ -21,6 +21,7 @@ model User {
   refreshToken   String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  accountStatus AccountStatus @default(active)
 
   // Relations
   propertiesAsSeller Property[] @relation("SellerProperties")
@@ -34,6 +35,11 @@ enum Role {
   agent
   seller
   buyer
+}
+
+enum AccountStatus {
+  active
+  suspended
 }
 
 model Property {
