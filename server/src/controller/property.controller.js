@@ -233,25 +233,6 @@ const deleteProperty = asyncHandler(async (req, res) => {
     )
   );
 });
-// get all property
-
-const getAllProperty = asyncHandler(async (req, res) => {
-  const properties = await prisma.property.findMany({
-    where: {
-      approvalStatus: "approved",
-      status: "available",
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, properties, "All properties fetched successfully")
-    );
-});
 
 const getPropertiesById = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -269,4 +250,4 @@ const getPropertiesById = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, property, "Property fetched successfully"));
 });
-export { addProperty, getMyProperties, updateProperty, deleteProperty, getAllProperty, getPropertiesById };
+export { addProperty, getMyProperties, updateProperty, deleteProperty,  getPropertiesById };
