@@ -122,6 +122,14 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!user) {
     throw new ApiError(400, "user does not exist");
   }
+
+  if (user.accountStatus === "suspended") {
+  throw new ApiError(
+    403,
+    "Your account has been suspended"
+  );
+}
+
   const isPasswordValid = await isPasswordCorrect(password, user.password);
   if (!isPasswordValid) {
     throw new ApiError(401, "Inavlid User credentials");
@@ -190,6 +198,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     if (!user) {
       throw new ApiError(401, "Inavlid refresh token");
     }
+
+    if (user.accountStatus === "suspended") {
+  throw new ApiError(
+    403,
+    "Your account has been suspended"
+  );
+}
 
     if (incomingRefreshToken !== user?.refreshToken) {
       throw new ApiError(402, "Refresh token is expired or used");
