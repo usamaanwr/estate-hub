@@ -15,6 +15,14 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
     where: { id: decodedToken?.id },
     omit: { password: true, refreshToken: true },
   });
+
+  if (user.accountStatus === "suspended") {
+  throw new ApiError(
+    403,
+    "Your account has been suspended"
+  );
+}
+
   if (!user) {
     throw new ApiError(401, "Invalid Access Token");
   }
